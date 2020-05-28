@@ -1,0 +1,132 @@
+﻿@model NavmiiTest.Models.FileTransfer
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<style type="text/css">
+    .outerDiv {
+        margin-top: 50px;
+        margin-left: 25%;
+        margin-bottom: 20px;
+    }
+
+    .square {
+        height: 200px;
+        width: 200px;
+        border: 1px dashed;
+        padding-top: 80px;
+        padding-left: 0px;
+        margin-bottom: 20px;
+    }
+
+    .checkbox {
+        margin-bottom: 20px;
+        margin-top: 0px;
+    }
+</style>
+<div class="outerDiv">
+    <div class="row">
+        <div class="col-md-4" style="width:24.333333%">
+            @Html.Label("Source Files", new { @class = "square" })
+        </div>
+        <div class="col-md-4" style="width:24.333333%">
+            <div id="progressbar" style="position: relative; display: none">
+                <span style="position: absolute; left: 8%; top: 20%" id="progressBar-label">
+                    Uploading...
+                </span>
+            </div>
+        </div>
+        <div class="col-md-4" style="width:24.333333%" id="tarFile">
+            @Html.Label("Targetted Files", new { @class = "square" })
+        </div>
+    </div>
+    <form name="filetransfer-form" id="filetransfer-form">
+        <div class="row">
+            <div class="col-md-4" style="width:7%;">
+                @Html.Label("Copy", new { @class = "checkbox" })
+            </div>
+            <div class="col-md-4" style="width:7%;">
+                @Html.CheckBoxFor(x => x.Copy, new { id = "copyFile" })
+            </div>
+            <div class="col-md-4" style="width:7%;">
+                @Html.Label("Move", new { @class = "checkbox" })
+            </div>
+            <div class="col-md-4" style="width:7%;">
+                @Html.CheckBoxFor(x => x.Move, new { id = "moveFile" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <input type="button" value="Transfer" id="transferBtn" />
+            </div>
+        </div>
+    </form>
+</div>
+<link href="~/Content/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.12.4.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#transferBtn').click(function (e) {
+                event.preventDefault();
+                Reset();
+                if ($('#copyFile:checked').length > 0 || $('#moveFile:checked').length > 0) {
+                    if (!($('#copyFile:checked').length > 0 && $('#moveFile:checked').length > 0)) {
+                        var progressbarLabel = $('#progressBar-label');
+                        var progressbarDiv = $('#progressbar');
+                        $.ajax({
+                            type: "POST",
+                            url: "/Home/FileTransfer",
+                            data: $("#filetransfer-form").serialize(),
+                            success: function (result) {
+                                if (typeof result != "object") {
+                                    $('.isa_error').html('');
+                                    $('.isa_error').append("<i class='fa fa-times-circle'></i>" + result.split('¬')[0]);
+                                    $('.isa_error').css('display', 'block');
+                                    progressbarDiv.css('display', 'none')
+                                }
+                                else {
+                                    progressbarLabel.text('Files Copying or Moving Complete');
+                                    progressbarDiv.fadeOut(2000);
+                                    if (result.Copy == true) {
+                                        $('#tarFile').html('');
+                                        $('#tarFile').html(result.NumberOfFilesTransfer + " " + " Files is copied from source folder to target folder");
+                                        $('#tarFile').addClass("square");
+                                    } else if (result.Move == true) {
+                                        $('#tarFile').html('');
+                                        $('#tarFile').html(result.NumberOfFilesTransfer + " " + " Files is Moved from source folder to target folder");
+                                        $('#tarFile').addClass("square");
+                                    }
+                                }
+
+                            },
+                            error: function () {
+                            }
+                        })
+                        progressbarLabel.text('Files Copying or Moving...');
+
+                        progressbarDiv.progressbar({
+                            value: false
+                        }).fadeIn(500);
+                    }
+                    else {
+                        $('.isa_info').html('');
+                        $('.isa_info').append("<i class='fa fa-times-circle'></i>" + "Please select anyone file transfer function");
+                        $('.isa_info').css('display', 'block');
+                    }
+                }
+                else {
+                    $('.isa_info').html('');
+                    $('.isa_info').append("<i class='fa fa-times-circle'></i>" + "Please select copy or move the files");
+                    $('.isa_info').css('display', 'block');
+                }
+            });
+        });
+        function Reset() {
+            $('.isa_info').css('display', 'none');
+            $('.isa_error').css('display', 'none');
+            $('.isa_success').css('display', 'none');
+        }
+    </script>
+}
